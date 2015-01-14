@@ -1,19 +1,24 @@
 package fenceCipher;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * Created by michaelhappel on 11/01/15.
+ * Created by nixrod on 11/01/15.
  * see http://www.reddit.com/r/dailyprogrammer/comments/2rnwzf/20150107_challenge_196_intermediate_rail_fence/
  */
 public class RailFenceCipher {
 
+    /**
+     * args[0]: mode (enc | dec)
+     * args[1]: fenceHeight
+     * args[2]: string
+     * @param args Command line arguments
+     */
     public static void main(String[] args) {
-        //System.out.println(encrypt("LOLOLOLOLOLOLOLOLO", 2));
-        decrypt("RIMIRAREDTORALPORMEDCDYGM", 3);
+        String s = args[0].equals("enc") ?
+                encrypt(args[2], Integer.parseInt(args[1])) :
+                decrypt(args[2], Integer.parseInt(args[1]));
+        System.out.print(s);
     }
 
     /**
@@ -48,9 +53,13 @@ public class RailFenceCipher {
         return cypherBuilder.toString();
     }
 
+    /**
+     * Decrypts a cypher string using the railFence decryption mechanism.
+     * @param cypher The string to decrypt
+     * @param fenceHeight The height of the fence which is used for the decryption.
+     * @return String containing the plaintext
+     */
     protected static String decrypt (String cypher, int fenceHeight) {
-        StringBuilder plaintextBuilder = new StringBuilder();
-
         Map<Integer, List<Integer>> fenceDistances = calculateFenceDistances(fenceHeight);
         // The length of a full fence segment, on which the pattern of the fence starts repeating itself again.
         int segmentLength = fenceDistances.get(0).get(0);
@@ -73,18 +82,32 @@ public class RailFenceCipher {
             }
             railLengths.put(i, railLength);
         }
-        System.out.println(railLengths);
 
         // Put all the letters in the cypher to their proper places as in the cleartext
+        char[] plaintext = new char[cypher.length()];
+
         int nextCharToProcess = 0;
         for (int i = 0; i < fenceHeight; i++) {
+            int charCleartextPosition = i;
+            boolean isDownstroke = true;
+
             for (int j = 0; j < railLengths.get(i); j++) {
+                int nextDistanceKey = (isDownstroke) ? 0 : 1;
+
+                // find matching char in cypher
                 char charToProcess = cypher.charAt(nextCharToProcess);
-                //int charPosition = offset + railDistance (depending on up/downstroke)
+                // place char in plaintext
+                plaintext[charCleartextPosition] = charToProcess;
+
+                // determine where to place next char in cleartext
+                charCleartextPosition += fenceDistances.get(i).get(nextDistanceKey);
+
+                nextCharToProcess ++;
+                isDownstroke = !isDownstroke;
             }
         }
 
-        return null;
+        return new String(plaintext);
     }
 
     /**
